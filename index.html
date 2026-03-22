@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow — Expense &amp; Wellness Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+    <!-- ========== MODE SELECTOR (Landing) ========== -->
+    <div class="mode-selector" id="modeSelector">
+        <div class="mode-selector-inner">
+            <div class="mode-header">
+                <span class="mode-logo">&#127775;</span>
+                <h1>LifeFlow</h1>
+                <p>Your personal tracking companion</p>
+            </div>
+            <div class="mode-cards">
+                <button class="mode-card" id="selectExpense">
+                    <div class="mode-card-icon">&#128176;</div>
+                    <h2>Expense Tracker</h2>
+                    <p>Track monthly expenses, set budgets per category, and export to Excel.</p>
+                    <span class="mode-card-arrow">&rarr;</span>
+                </button>
+                <button class="mode-card mode-card-wellness" id="selectWellness">
+                    <div class="mode-card-icon">&#127947;&#65039;</div>
+                    <h2>Wellness Tracker</h2>
+                    <p>Log workouts, track weight, get weekly exercise plans, and reach your fitness goals.</p>
+                    <span class="mode-card-arrow">&rarr;</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== EXPENSE TRACKER ========== -->
+    <div class="app-wrapper" id="expenseApp" style="display:none;">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">&#128176;</span>
+                    <span class="logo-text">ExpenseFlow</span>
+                </div>
+                <button class="btn-back-mode" id="expenseBackToMode" title="Switch mode">&larr;</button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="dashboard"><span class="nav-icon">&#128202;</span><span>Dashboard</span></a>
+                <a href="#" class="nav-item" data-view="add"><span class="nav-icon">&#10133;</span><span>Add Expense</span></a>
+                <a href="#" class="nav-item" data-view="history"><span class="nav-icon">&#128203;</span><span>History</span></a>
+                <a href="#" class="nav-item" data-view="budget"><span class="nav-icon">&#127919;</span><span>Budgets</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-export" id="exportBtn" title="Export as Excel"><span class="nav-icon">&#128229;</span><span>Export Excel</span></button>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="topbar">
+                <button class="menu-toggle" id="menuToggle">&#9776;</button>
+                <div class="topbar-left"><h1 class="page-title" id="pageTitle">Dashboard</h1></div>
+                <div class="topbar-right">
+                    <div class="currency-selector">
+                        <select id="currencySelect">
+                            <option value="USD">$ USD</option>
+                            <option value="GBP">&pound; GBP</option>
+                            <option value="INR">&#8377; INR</option>
+                            <option value="EUR">&euro; EUR</option>
+                            <option value="JPY">&yen; JPY</option>
+                            <option value="AUD">A$ AUD</option>
+                            <option value="CAD">C$ CAD</option>
+                        </select>
+                    </div>
+                    <div class="month-selector">
+                        <button class="btn-arrow" id="prevMonth">&lsaquo;</button>
+                        <span id="currentMonth">March 2026</span>
+                        <button class="btn-arrow" id="nextMonth">&rsaquo;</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard -->
+            <section class="view active" id="view-dashboard">
+                <div class="summary-cards">
+                    <div class="card card-total"><div class="card-icon">&#128184;</div><div class="card-info"><span class="card-label">Total Spent</span><span class="card-value" id="totalSpent">$0.00</span></div></div>
+                    <div class="card card-budget"><div class="card-icon">&#127919;</div><div class="card-info"><span class="card-label">Budget Left</span><span class="card-value" id="budgetLeft">$0.00</span></div></div>
+                    <div class="card card-count"><div class="card-icon">&#129534;</div><div class="card-info"><span class="card-label">Transactions</span><span class="card-value" id="transactionCount">0</span></div></div>
+                    <div class="card card-avg"><div class="card-icon">&#128200;</div><div class="card-info"><span class="card-label">Daily Average</span><span class="card-value" id="dailyAvg">$0.00</span></div></div>
+                </div>
+                <div class="charts-row">
+                    <div class="chart-container"><h3>Spending by Category</h3><canvas id="categoryChart" width="400" height="400"></canvas><div class="chart-legend" id="categoryLegend"></div></div>
+                    <div class="chart-container"><h3>Daily Spending</h3><canvas id="dailyChart" width="600" height="400"></canvas></div>
+                </div>
+                <div class="recent-transactions">
+                    <div class="section-header"><h3>Recent Transactions</h3><a href="#" class="view-all" data-view="history">View All &rarr;</a></div>
+                    <div class="transactions-list" id="recentTransactions"><div class="empty-state">No expenses yet. Start by adding one!</div></div>
+                </div>
+            </section>
+
+            <!-- Add Expense -->
+            <section class="view" id="view-add">
+                <div class="form-container">
+                    <h2>Add New Expense</h2>
+                    <form id="expenseForm" autocomplete="off">
+                        <div class="form-row">
+                            <div class="form-group"><label for="expenseTitle">Title</label><input type="text" id="expenseTitle" placeholder="e.g. Grocery shopping" required maxlength="100"></div>
+                            <div class="form-group"><label for="expenseAmount">Amount (<span class="currency-label">$</span>)</label><input type="number" id="expenseAmount" placeholder="0.00" min="0.01" max="999999.99" step="0.01" required></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="expenseCategory">Category</label>
+                                <select id="expenseCategory" required>
+                                    <option value="">Select category</option>
+                                    <option value="&#127828; Food &amp; Dining">&#127828; Food &amp; Dining</option>
+                                    <option value="&#128663; Transportation">&#128663; Transportation</option>
+                                    <option value="&#127968; Housing &amp; Rent">&#127968; Housing &amp; Rent</option>
+                                    <option value="&#128161; Utilities">&#128161; Utilities</option>
+                                    <option value="&#128717;&#65039; Shopping">&#128717;&#65039; Shopping</option>
+                                    <option value="&#127916; Entertainment">&#127916; Entertainment</option>
+                                    <option value="&#127973; Healthcare">&#127973; Healthcare</option>
+                                    <option value="&#128170; Gym &amp; Fitness">&#128170; Gym &amp; Fitness</option>
+                                    <option value="&#10084;&#65039; Health &amp; Wellness">&#10084;&#65039; Health &amp; Wellness</option>
+                                    <option value="&#128218; Education">&#128218; Education</option>
+                                    <option value="&#9992;&#65039; Travel">&#9992;&#65039; Travel</option>
+                                    <option value="&#128241; Subscriptions">&#128241; Subscriptions</option>
+                                    <option value="&#128062; Pets">&#128062; Pets</option>
+                                    <option value="&#128230; Other">&#128230; Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label for="expenseDate">Date</label><input type="date" id="expenseDate" required></div>
+                        </div>
+                        <div class="form-group"><label for="expenseNotes">Notes (optional)</label><textarea id="expenseNotes" placeholder="Any additional details..." rows="3" maxlength="300"></textarea></div>
+                        <button type="submit" class="btn-primary" id="submitExpense"><span>Add Expense</span></button>
+                    </form>
+                </div>
+                <div class="quick-add-section">
+                    <h3>Quick Add</h3>
+                    <p class="subtitle">Tap a template to pre-fill the form</p>
+                    <div class="quick-add-grid" id="quickAddGrid"></div>
+                </div>
+            </section>
+
+            <!-- History -->
+            <section class="view" id="view-history">
+                <div class="history-controls">
+                    <div class="search-bar"><input type="text" id="searchExpenses" placeholder="Search expenses..." maxlength="100"></div>
+                    <div class="filter-bar">
+                        <select id="filterCategory"><option value="">All Categories</option></select>
+                        <select id="sortExpenses">
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                            <option value="amount-desc">Highest Amount</option>
+                            <option value="amount-asc">Lowest Amount</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="transactions-list full-list" id="allTransactions"><div class="empty-state">No expenses found for this month.</div></div>
+            </section>
+
+            <!-- Budget -->
+            <section class="view" id="view-budget">
+                <div class="budget-header"><h2>Monthly Budgets</h2><p class="subtitle">Set spending limits for each category individually</p></div>
+                <div class="budget-total-bar">
+                    <div class="budget-total-info"><span class="budget-total-label">Total Budget:</span><span class="budget-total-value" id="totalBudgetDisplay">Not set</span></div>
+                    <div class="budget-total-info"><span class="budget-total-label">Total Spent:</span><span class="budget-total-value budget-spent" id="totalSpentBudget">$0.00</span></div>
+                    <div class="budget-total-info"><span class="budget-total-label">Remaining:</span><span class="budget-total-value budget-remaining" id="totalRemainingBudget">$0.00</span></div>
+                </div>
+                <div class="budget-categories" id="budgetCategories"></div>
+                <div class="budget-save-row"><button class="btn-primary" id="saveBudget">&#128190; Save All Budgets</button></div>
+            </section>
+        </main>
+
+        <!-- Edit Modal -->
+        <div class="modal-overlay" id="editModal">
+            <div class="modal">
+                <div class="modal-header"><h3>Edit Expense</h3><button class="modal-close" id="closeModal">&times;</button></div>
+                <form id="editForm" autocomplete="off">
+                    <input type="hidden" id="editId">
+                    <div class="form-group"><label for="editTitle">Title</label><input type="text" id="editTitle" required maxlength="100"></div>
+                    <div class="form-group"><label for="editAmount">Amount (<span class="currency-label">$</span>)</label><input type="number" id="editAmount" min="0.01" max="999999.99" step="0.01" required></div>
+                    <div class="form-group"><label for="editCategory">Category</label><select id="editCategory" required></select></div>
+                    <div class="form-group"><label for="editDate">Date</label><input type="date" id="editDate" required></div>
+                    <div class="form-group"><label for="editNotes">Notes</label><textarea id="editNotes" rows="3" maxlength="300"></textarea></div>
+                    <div class="modal-actions"><button type="button" class="btn-secondary" id="cancelEdit">Cancel</button><button type="submit" class="btn-primary">Save Changes</button></div>
+                </form>
+            </div>
+        </div>
+        <div class="modal-overlay" id="deleteModal">
+            <div class="modal modal-sm">
+                <div class="modal-header"><h3>Delete Expense</h3><button class="modal-close" id="closeDeleteModal">&times;</button></div>
+                <p class="modal-body-text">Are you sure you want to delete this expense? This cannot be undone.</p>
+                <div class="modal-actions"><button class="btn-secondary" id="cancelDelete">Cancel</button><button class="btn-danger" id="confirmDelete">Delete</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== WELLNESS TRACKER ========== -->
+    <div class="app-wrapper" id="wellnessApp" style="display:none;">
+        <aside class="sidebar sidebar-wellness" id="wellnessSidebar">
+            <div class="sidebar-header">
+                <div class="logo"><span class="logo-icon">&#127947;&#65039;</span><span class="logo-text">WellnessFlow</span></div>
+                <button class="btn-back-mode" id="wellnessBackToMode" title="Switch mode">&larr;</button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="wnav-item active" data-wview="w-dashboard"><span class="nav-icon">&#128202;</span><span>Dashboard</span></a>
+                <a href="#" class="wnav-item" data-wview="w-log"><span class="nav-icon">&#127939;</span><span>Log Activity</span></a>
+                <a href="#" class="wnav-item" data-wview="w-weight"><span class="nav-icon">&#9878;&#65039;</span><span>Weight Log</span></a>
+                <a href="#" class="wnav-item" data-wview="w-plan"><span class="nav-icon">&#128197;</span><span>Weekly Plan</span></a>
+                <a href="#" class="wnav-item" data-wview="w-profile"><span class="nav-icon">&#128100;</span><span>Profile &amp; Goals</span></a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="topbar topbar-wellness">
+                <button class="menu-toggle" id="wellnessMenuToggle">&#9776;</button>
+                <div class="topbar-left"><h1 class="page-title" id="wPageTitle">Dashboard</h1></div>
+                <div class="topbar-right">
+                    <div class="week-selector">
+                        <button class="btn-arrow" id="wPrevWeek">&lsaquo;</button>
+                        <span id="wCurrentWeek">This Week</span>
+                        <button class="btn-arrow" id="wNextWeek">&rsaquo;</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Wellness Dashboard -->
+            <section class="wview active" id="wview-w-dashboard">
+                <div class="w-profile-prompt" id="wProfilePrompt">
+                    <div class="prompt-icon">&#128075;</div>
+                    <h2>Welcome! Let's set up your profile</h2>
+                    <p>Tell us about yourself so we can personalize your fitness journey.</p>
+                    <button class="btn-primary btn-wellness" id="wGoToProfile" style="width:auto;padding:14px 40px;">Set Up Profile &rarr;</button>
+                </div>
+                <div class="summary-cards" id="wDashCards">
+                    <div class="card card-wellness-1"><div class="card-icon">&#128293;</div><div class="card-info"><span class="card-label">Calories Burned</span><span class="card-value" id="wCalories">0</span></div></div>
+                    <div class="card card-wellness-2"><div class="card-icon">&#127939;</div><div class="card-info"><span class="card-label">Workouts This Week</span><span class="card-value" id="wWorkouts">0</span></div></div>
+                    <div class="card card-wellness-3"><div class="card-icon">&#9201;&#65039;</div><div class="card-info"><span class="card-label">Total Minutes</span><span class="card-value" id="wMinutes">0</span></div></div>
+                    <div class="card card-wellness-4"><div class="card-icon">&#9878;&#65039;</div><div class="card-info"><span class="card-label">Current Weight</span><span class="card-value" id="wCurrentWeight">&mdash;</span></div></div>
+                </div>
+                <div class="charts-row">
+                    <div class="chart-container"><h3>Activity Breakdown</h3><canvas id="wActivityChart" width="400" height="400"></canvas><div class="chart-legend" id="wActivityLegend"></div></div>
+                    <div class="chart-container"><h3>Weight Progress</h3><canvas id="wWeightChart" width="600" height="400"></canvas></div>
+                </div>
+                <div class="recent-transactions"><div class="section-header"><h3>Recent Activities</h3><a href="#" class="wview-all" data-wview="w-log">View All &rarr;</a></div><div class="transactions-list" id="wRecentActivities"><div class="empty-state">No activities logged yet. Start moving!</div></div></div>
+            </section>
+
+            <!-- Log Activity -->
+            <section class="wview" id="wview-w-log">
+                <div class="form-container">
+                    <h2>Log Activity</h2>
+                    <form id="wActivityForm" autocomplete="off">
+                        <div class="form-row">
+                            <div class="form-group"><label for="wActivityType">Activity Type</label>
+                                <select id="wActivityType" required>
+                                    <option value="">Select activity</option>
+                                    <optgroup label="Gym &amp; Strength">
+                                        <option value="&#127947;&#65039; Weight Training">&#127947;&#65039; Weight Training</option>
+                                        <option value="&#128170; Bodyweight">&#128170; Bodyweight Exercises</option>
+                                        <option value="&#129336; CrossFit">&#129336; CrossFit</option>
+                                    </optgroup>
+                                    <optgroup label="Cardio">
+                                        <option value="&#127939; Running">&#127939; Running</option>
+                                        <option value="&#128692; Cycling">&#128692; Cycling</option>
+                                        <option value="&#127946; Swimming">&#127946; Swimming</option>
+                                        <option value="&#128694; Walking">&#128694; Walking</option>
+                                        <option value="&#9968;&#65039; Hiking">&#9968;&#65039; Hiking</option>
+                                        <option value="&#129342; Jump Rope">&#129342; Jump Rope</option>
+                                    </optgroup>
+                                    <optgroup label="Sports">
+                                        <option value="&#9917; Football">&#9917; Football/Soccer</option>
+                                        <option value="&#127936; Basketball">&#127936; Basketball</option>
+                                        <option value="&#127992; Badminton">&#127992; Badminton</option>
+                                        <option value="&#127934; Tennis">&#127934; Tennis</option>
+                                        <option value="&#127955; Table Tennis">&#127955; Table Tennis</option>
+                                        <option value="&#127952; Volleyball">&#127952; Volleyball</option>
+                                        <option value="&#127951; Cricket">&#127951; Cricket</option>
+                                    </optgroup>
+                                    <optgroup label="Flexibility &amp; Wellness">
+                                        <option value="&#129496; Yoga">&#129496; Yoga</option>
+                                        <option value="&#129496; Pilates">&#129496; Pilates</option>
+                                        <option value="&#129496; Stretching">&#129496; Stretching</option>
+                                        <option value="&#129496; Meditation">&#129496; Meditation</option>
+                                    </optgroup>
+                                    <optgroup label="Other">
+                                        <option value="&#128131; Dancing">&#128131; Dancing</option>
+                                        <option value="&#129354; Boxing">&#129354; Boxing/Martial Arts</option>
+                                        <option value="&#127948;&#65039; Golf">&#127948;&#65039; Golf</option>
+                                        <option value="&#128230; Other">&#128230; Other</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="form-group"><label for="wDuration">Duration (minutes)</label><input type="number" id="wDuration" placeholder="e.g. 45" min="1" max="600" required></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="wCaloriesBurned">Calories Burned (est.)</label><input type="number" id="wCaloriesBurned" placeholder="e.g. 300" min="0" max="9999"></div>
+                            <div class="form-group"><label for="wActivityDate">Date</label><input type="date" id="wActivityDate" required></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="wIntensity">Intensity</label>
+                                <select id="wIntensity"><option value="light">&#128994; Light</option><option value="moderate" selected>&#128992; Moderate</option><option value="intense">&#128308; Intense</option></select>
+                            </div>
+                            <div class="form-group"><label for="wMood">How did you feel?</label>
+                                <select id="wMood"><option value="great">&#128516; Great</option><option value="good" selected>&#128578; Good</option><option value="okay">&#128528; Okay</option><option value="tired">&#128547; Tired</option><option value="exhausted">&#128565; Exhausted</option></select>
+                            </div>
+                        </div>
+                        <div class="form-group"><label for="wActivityNotes">Notes (optional)</label><textarea id="wActivityNotes" placeholder="How was the session? Any PRs?" rows="3" maxlength="300"></textarea></div>
+                        <button type="submit" class="btn-primary btn-wellness"><span>Log Activity &#127939;</span></button>
+                    </form>
+                </div>
+                <div class="recent-transactions" style="max-width:700px;margin-top:24px;">
+                    <div class="section-header"><h3>Activity History</h3></div>
+                    <div class="transactions-list" id="wAllActivities"><div class="empty-state">No activities logged yet.</div></div>
+                </div>
+            </section>
+
+            <!-- Weight Log -->
+            <section class="wview" id="wview-w-weight">
+                <div class="form-container" style="max-width:500px;">
+                    <h2>Log Weight</h2>
+                    <form id="wWeightForm" autocomplete="off">
+                        <div class="form-row">
+                            <div class="form-group"><label for="wWeightInput">Weight (<span id="wWeightUnit">kg</span>)</label><input type="number" id="wWeightInput" placeholder="e.g. 75.5" min="20" max="500" step="0.1" required></div>
+                            <div class="form-group"><label for="wWeightDate">Date</label><input type="date" id="wWeightDate" required></div>
+                        </div>
+                        <button type="submit" class="btn-primary btn-wellness"><span>Save Weight &#9878;&#65039;</span></button>
+                    </form>
+                </div>
+                <div class="chart-container" style="margin-top:24px;"><h3>Weight Over Time</h3><canvas id="wWeightHistoryChart" width="700" height="350"></canvas></div>
+                <div class="recent-transactions" style="margin-top:24px;"><div class="section-header"><h3>Weight History</h3></div><div class="transactions-list" id="wWeightHistory"><div class="empty-state">No weight entries yet.</div></div></div>
+            </section>
+
+            <!-- Weekly Plan -->
+            <section class="wview" id="wview-w-plan">
+                <div class="w-plan-header"><h2>Your Weekly Exercise Plan</h2><p class="subtitle" id="wPlanSubtitle">Based on your goal. Tap checkmark to mark complete!</p></div>
+                <div class="w-plan-grid" id="wPlanGrid"></div>
+                <div class="w-plan-tips"><h3>&#128161; Tips</h3><div id="wTips"></div></div>
+            </section>
+
+            <!-- Profile & Goals -->
+            <section class="wview" id="wview-w-profile">
+                <div class="form-container" style="max-width:600px;">
+                    <h2>Your Profile &amp; Goals</h2>
+                    <p class="subtitle">This helps us personalize your weekly plan and track progress.</p>
+                    <form id="wProfileForm" autocomplete="off">
+                        <div class="form-row">
+                            <div class="form-group"><label for="wName">Name</label><input type="text" id="wName" placeholder="e.g. Pradeep" maxlength="50"></div>
+                            <div class="form-group"><label for="wAge">Age</label><input type="number" id="wAge" placeholder="e.g. 28" min="10" max="120"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="wHeight">Height (cm)</label><input type="number" id="wHeight" placeholder="e.g. 175" min="50" max="300" step="0.1"></div>
+                            <div class="form-group"><label for="wStartWeight">Starting Weight (kg)</label><input type="number" id="wStartWeight" placeholder="e.g. 85" min="20" max="500" step="0.1"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="wGoalWeight">Goal Weight (kg)</label><input type="number" id="wGoalWeight" placeholder="e.g. 72" min="20" max="500" step="0.1"></div>
+                            <div class="form-group"><label for="wGoalType">Your Goal</label>
+                                <select id="wGoalType">
+                                    <option value="weight-loss">&#128293; Weight Loss</option>
+                                    <option value="stay-fit">&#128170; Stay Fit &amp; Active</option>
+                                    <option value="build-muscle">&#127947;&#65039; Build Muscle</option>
+                                    <option value="improve-endurance">&#127939; Improve Endurance</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label for="wFitnessLevel">Fitness Level</label>
+                                <select id="wFitnessLevel"><option value="beginner">&#127793; Beginner</option><option value="intermediate">&#9889; Intermediate</option><option value="advanced">&#128293; Advanced</option></select>
+                            </div>
+                            <div class="form-group"><label for="wDaysPerWeek">Workout Days/Week</label>
+                                <select id="wDaysPerWeek"><option value="3">3 days</option><option value="4" selected>4 days</option><option value="5">5 days</option><option value="6">6 days</option><option value="7">7 days</option></select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary btn-wellness"><span>Save Profile &#128100;</span></button>
+                    </form>
+                </div>
+                <div class="w-progress-summary" id="wProgressSummary" style="display:none;">
+                    <h3>&#128200; Your Progress</h3>
+                    <div class="w-progress-cards">
+                        <div class="w-progress-card"><span class="w-progress-label">Starting Weight</span><span class="w-progress-value" id="wProgStart">&mdash;</span></div>
+                        <div class="w-progress-card"><span class="w-progress-label">Current Weight</span><span class="w-progress-value" id="wProgCurrent">&mdash;</span></div>
+                        <div class="w-progress-card"><span class="w-progress-label">Goal Weight</span><span class="w-progress-value" id="wProgGoal">&mdash;</span></div>
+                        <div class="w-progress-card"><span class="w-progress-label">Progress</span><span class="w-progress-value" id="wProgPercent">0%</span></div>
+                    </div>
+                    <div class="budget-bar" style="margin-top:12px;height:12px;"><div class="budget-bar-fill" id="wProgBar" style="width:0%;background:var(--success);"></div></div>
+                </div>
+            </section>
+        </main>
+        <div class="modal-overlay" id="wDeleteModal">
+            <div class="modal modal-sm">
+                <div class="modal-header"><h3>Delete Entry</h3><button class="modal-close" id="wCloseDeleteModal">&times;</button></div>
+                <p class="modal-body-text">Are you sure you want to delete this entry?</p>
+                <div class="modal-actions"><button class="btn-secondary" id="wCancelDelete">Cancel</button><button class="btn-danger" id="wConfirmDelete">Delete</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast (shared) -->
+    <div class="toast" id="toast"><span id="toastMessage"></span></div>
+
+    <!-- Footer with Version Control -->
+    <footer class="app-footer">
+        <p>LifeFlow v1.0.0 | Last Updated: March 23, 2026 | <span id="buildInfo">Ready</span></p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
