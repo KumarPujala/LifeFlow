@@ -18,6 +18,7 @@ const state = {
   toursCompleted: {},
   expenses: [],
   budgets: {},
+  totalBudget: 0,
   activities: [],
   weightEntries: [],
   userProfile: {},
@@ -42,6 +43,7 @@ function loadFromLocalStorage() {
     const data = JSON.parse(saved);
     state.expenses = data.expenses || [];
     state.budgets = data.budgets || {};
+    state.totalBudget = data.totalBudget || 0;
     state.activities = data.activities || [];
     state.weightEntries = data.weightEntries || [];
     state.userProfile = data.userProfile || {};
@@ -56,6 +58,7 @@ function saveToLocalStorage() {
   const data = {
     expenses: state.expenses,
     budgets: state.budgets,
+    totalBudget: state.totalBudget,
     activities: state.activities,
     weightEntries: state.weightEntries,
     userProfile: state.userProfile,
@@ -137,6 +140,7 @@ function setupEventListeners() {
 
   // Budget Save
   document.getElementById('saveBudget').addEventListener('click', saveBudgets);
+  document.getElementById('setTotalBudget').addEventListener('click', setTotalBudget);
 
   // Wellness Activity Form
   document.getElementById('wActivityForm').addEventListener('submit', addActivity);
@@ -316,7 +320,8 @@ function getDaysInMonth() {
 }
 
 function getTotalBudget() {
-  return Object.values(state.budgets).reduce((sum, b) => sum + (parseFloat(b) || 0), 0);
+  const categoryTotal = Object.values(state.budgets).reduce((sum, b) => sum + (parseFloat(b) || 0), 0);
+  return state.totalBudget > 0 ? Math.max(state.totalBudget, categoryTotal) : categoryTotal;
 }
 
 // Render Recent Transactions
@@ -622,12 +627,14 @@ function getSpentInCategory(category) {
 }
 
 function updateBudgetTotals() {
+  const categoryTotal = Object.values(state.budgets).reduce((sum, b) => sum + (parseFloat(b) || 0), 0);
   const total = getTotalBudget();
   const spent = getExpensesForMonth().reduce((sum, e) => sum + e.amount, 0);
   const remaining = Math.max(0, total - spent);
   const symbol = currencySymbols[state.currency];
 
-  document.getElementById('totalBudgetDisplay').textContent = total > 0 ? `${symbol}${total.toFixed(2)}` : 'Not set';
+  document.getElementById('totalBudgetInput').value = state.totalBudget || '';
+  document.getElementById('totalBudgetDisplay').textContent = `${symbol}${categoryTotal.toFixed(2)}`;
   document.getElementById('totalSpentBudget').textContent = `${symbol}${spent.toFixed(2)}`;
   document.getElementById('totalRemainingBudget').textContent = `${symbol}${remaining.toFixed(2)}`;
 }
@@ -640,7 +647,17 @@ function saveBudgets() {
     else delete state.budgets[category];
   });
   saveToLocalStorage();
+  updateBudgetTotals();
   showToast('✓ Budgets saved!');
+  updateExpenseDashboard();
+}
+
+function setTotalBudget() {
+  const value = parseFloat(document.getElementById('totalBudgetInput').value);
+  state.totalBudget = value > 0 ? value : 0;
+  saveToLocalStorage();
+  updateBudgetTotals();
+  showToast('✓ Total budget set!');
   updateExpenseDashboard();
 }
 

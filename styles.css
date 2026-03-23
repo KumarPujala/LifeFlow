@@ -467,6 +467,18 @@ body {
 .budget-total-value.budget-remaining { color: var(--success); }
 .budget-total-value.over-budget { color: var(--danger); }
 
+.budget-total-input-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.budget-total-input {
+    width: 140px; padding: 10px 14px; border: 2px solid var(--border);
+    border-radius: var(--radius-sm); font-family: inherit; font-size: 16px;
+    font-weight: 600; background: var(--bg); color: var(--text); transition: var(--transition);
+}
+.budget-total-input:focus { outline: none; border-color: var(--primary); background: var(--card-bg); box-shadow: 0 0 0 4px rgba(108,92,231,0.1); }
+.btn-set-budget {
+    padding: 10px 20px !important; width: auto !important; font-size: 14px !important;
+    white-space: nowrap; border-radius: var(--radius-sm) !important;
+}
+
 .budget-categories { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
 
 .budget-item {
