@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   setDefaultDates();
   updateCurrencyDisplay();
+  initRippleEffects();
+  initParticles();
 });
 
 function loadFromLocalStorage() {
@@ -1359,4 +1361,110 @@ function getWellnessTrend(type) {
   if (cur > prv) return `<span class="trend-indicator trend-down">\u2191 ${pct}%</span>`;
   if (cur < prv) return `<span class="trend-indicator trend-up">\u2193 ${Math.abs(pct)}%</span>`;
   return '<span class="trend-indicator trend-neutral">\u2194 0%</span>';
+}
+
+// ==================== RIPPLE EFFECT ====================
+function initRippleEffects() {
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-primary, .btn-secondary, .btn-danger, .btn-wellness, .quick-add-btn, .mode-card, .btn-export, .btn-set-budget');
+    if (!btn) return;
+
+    const ripple = document.createElement('span');
+    ripple.classList.add('ripple-effect');
+
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  });
+}
+
+// ==================== PARTICLE BACKGROUND ====================
+function initParticles() {
+  const canvas = document.createElement('canvas');
+  canvas.classList.add('particles-canvas');
+  document.body.prepend(canvas);
+
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function createParticle() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const colors = isDark
+      ? ['rgba(10,132,255,0.15)', 'rgba(48,209,88,0.12)', 'rgba(175,130,255,0.12)', 'rgba(255,159,10,0.1)']
+      : ['rgba(0,113,227,0.08)', 'rgba(52,199,89,0.06)', 'rgba(175,130,255,0.06)', 'rgba(255,149,0,0.05)'];
+
+    return {
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 3 + 1,
+      speedX: (Math.random() - 0.5) * 0.3,
+      speedY: (Math.random() - 0.5) * 0.3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      opacity: Math.random() * 0.5 + 0.2,
+      pulseSpeed: Math.random() * 0.01 + 0.005,
+      pulseOffset: Math.random() * Math.PI * 2,
+    };
+  }
+
+  const count = Math.min(40, Math.floor(window.innerWidth / 35));
+  for (let i = 0; i < count; i++) {
+    particles.push(createParticle());
+  }
+
+  let time = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    time += 1;
+
+    particles.forEach(p => {
+      p.x += p.speedX;
+      p.y += p.speedY;
+
+      if (p.x < -10) p.x = canvas.width + 10;
+      if (p.x > canvas.width + 10) p.x = -10;
+      if (p.y < -10) p.y = canvas.height + 10;
+      if (p.y > canvas.height + 10) p.y = -10;
+
+      const pulse = Math.sin(time * p.pulseSpeed + p.pulseOffset) * 0.3 + 0.7;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.opacity * pulse;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }
+  animate();
 }
