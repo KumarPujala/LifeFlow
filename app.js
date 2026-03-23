@@ -389,8 +389,8 @@ function renderDailyChart() {
       datasets: [{
         label: 'Daily Spending',
         data: amounts,
-        borderColor: '#6366f1',
-        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+        borderColor: '#0071E3',
+        backgroundColor: 'rgba(0, 113, 227, 0.08)',
         fill: true,
         tension: 0.4,
       }],
@@ -410,7 +410,7 @@ function renderChartLegend(elementId, labels, colors, data) {
 }
 
 function generateColors(count) {
-  const colors = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#14b8a6', '#f97316'];
+  const colors = ['#0071E3', '#FF2D55', '#FF9500', '#34C759', '#5AC8FA', '#AF52DE', '#30D158', '#FF3B30'];
   return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
 }
 
@@ -627,9 +627,9 @@ function getBudgetPercentage(category) {
 
 function getBudgetColor(category) {
   const percentage = getBudgetPercentage(category);
-  if (percentage >= 100) return '#ef4444';
-  if (percentage >= 80) return '#f97316';
-  return '#10b981';
+  if (percentage >= 100) return '#FF3B30';
+  if (percentage >= 80) return '#FF9500';
+  return '#34C759';
 }
 
 function getSpentInCategory(category) {
@@ -922,8 +922,8 @@ function renderWeightChart() {
       datasets: [{
         label: 'Weight (kg)',
         data: entries.map(e => e.weight),
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: '#34C759',
+        backgroundColor: 'rgba(52, 199, 89, 0.08)',
         fill: true,
         tension: 0.4,
       }],
@@ -946,8 +946,8 @@ function renderWeightProgressChart() {
       datasets: [{
         label: 'Weight Progress',
         data: entries.map(e => e.weight),
-        borderColor: '#06b6d4',
-        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+        borderColor: '#5AC8FA',
+        backgroundColor: 'rgba(90, 200, 250, 0.08)',
         fill: true,
         tension: 0.4,
       }],
@@ -1264,8 +1264,8 @@ function restoreCards(mode) {
 
 function getEmptyState(mode, title, description, navTarget) {
   const svg = mode === 'expense'
-    ? '<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="80" fill="#f0ecfe"/><rect x="60" y="70" width="80" height="60" rx="8" fill="#6C5CE7" opacity="0.2"/><rect x="70" y="85" width="60" height="4" rx="2" fill="#6C5CE7" opacity="0.4"/><rect x="70" y="95" width="40" height="4" rx="2" fill="#6C5CE7" opacity="0.3"/><rect x="70" y="105" width="50" height="4" rx="2" fill="#6C5CE7" opacity="0.3"/><circle cx="100" cy="60" r="15" fill="#6C5CE7" opacity="0.3"/><line x1="100" y1="50" x2="100" y2="70" stroke="#6C5CE7" stroke-width="2" opacity="0.4"/><line x1="90" y1="60" x2="110" y2="60" stroke="#6C5CE7" stroke-width="2" opacity="0.4"/></svg>'
-    : '<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="80" fill="#e0f7f6"/><path d="M80 130 L100 80 L120 130" stroke="#00b894" stroke-width="4" fill="none" opacity="0.4"/><circle cx="100" cy="70" r="15" fill="#00b894" opacity="0.3"/><rect x="85" y="120" width="30" height="4" rx="2" fill="#00b894" opacity="0.3"/><rect x="75" y="130" width="50" height="4" rx="2" fill="#00b894" opacity="0.2"/></svg>';
+    ? '<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="80" fill="rgba(0,113,227,0.06)"/><rect x="60" y="70" width="80" height="60" rx="12" fill="#0071E3" opacity="0.12"/><rect x="70" y="85" width="60" height="4" rx="2" fill="#0071E3" opacity="0.2"/><rect x="70" y="95" width="40" height="4" rx="2" fill="#0071E3" opacity="0.15"/><rect x="70" y="105" width="50" height="4" rx="2" fill="#0071E3" opacity="0.15"/><circle cx="100" cy="58" r="14" fill="#0071E3" opacity="0.15"/><line x1="100" y1="49" x2="100" y2="67" stroke="#0071E3" stroke-width="2" opacity="0.2"/><line x1="91" y1="58" x2="109" y2="58" stroke="#0071E3" stroke-width="2" opacity="0.2"/></svg>'
+    : '<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="80" fill="rgba(52,199,89,0.06)"/><path d="M80 130 L100 80 L120 130" stroke="#34C759" stroke-width="3" fill="none" opacity="0.25"/><circle cx="100" cy="68" r="14" fill="#34C759" opacity="0.15"/><rect x="85" y="120" width="30" height="4" rx="2" fill="#34C759" opacity="0.15"/><rect x="75" y="130" width="50" height="4" rx="2" fill="#34C759" opacity="0.1"/></svg>';
 
   const btnClass = mode === 'wellness' ? 'btn-empty btn-empty-wellness' : 'btn-empty';
   const btnHTML = navTarget
