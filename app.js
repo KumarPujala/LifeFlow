@@ -1,4 +1,12 @@
 // ==================== GLOBAL STATE ====================
+const DEFAULT_CATEGORIES = [
+  '🍔 Food & Dining', '🚗 Transportation', '🏠 Housing & Rent',
+  '💡 Utilities', '🛍️ Shopping', '🎬 Entertainment',
+  '🏥 Healthcare', '💪 Gym & Fitness', '❤️ Health & Wellness',
+  '📚 Education', '✈️ Travel', '📱 Subscriptions',
+  '🐾 Pets', '📦 Other'
+];
+
 const state = {
   currentMode: null,
   currentExpenseView: 'dashboard',
@@ -527,7 +535,8 @@ function quickAddTemplate(title, category, amount) {
 
 // Budget Management
 function renderBudgetView() {
-  const categories = [...new Set(state.expenses.map(e => e.category))];
+  const expenseCategories = state.expenses.map(e => e.category);
+  const categories = [...new Set([...DEFAULT_CATEGORIES, ...expenseCategories])];
   const container = document.getElementById('budgetCategories');
 
   container.innerHTML = categories.map(cat => `
