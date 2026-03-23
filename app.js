@@ -558,7 +558,7 @@ function populateCategoryFilter() {
 }
 
 const quickAddTemplates = [
-  { title: 'Lunch', category: '� Food & Dining', amounts: { USD: 15, GBP: 12, INR: 250, EUR: 14, JPY: 1500, AUD: 20, CAD: 18 } },
+  { title: 'Lunch', category: '🍔 Food & Dining', amounts: { USD: 15, GBP: 12, INR: 250, EUR: 14, JPY: 1500, AUD: 20, CAD: 18 } },
   { title: 'Coffee', category: '🍔 Food & Dining', amounts: { USD: 5, GBP: 4, INR: 80, EUR: 4.5, JPY: 500, AUD: 6, CAD: 6 } },
   { title: 'Gas', category: '🚗 Transportation', amounts: { USD: 50, GBP: 40, INR: 800, EUR: 45, JPY: 5000, AUD: 65, CAD: 60 } },
   { title: 'Movie', category: '🎬 Entertainment', amounts: { USD: 15, GBP: 12, INR: 300, EUR: 13, JPY: 1800, AUD: 22, CAD: 16 } },
