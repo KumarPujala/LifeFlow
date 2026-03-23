@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -61,6 +62,7 @@
                 <button class="menu-toggle" id="menuToggle">&#9776;</button>
                 <div class="topbar-left"><h1 class="page-title" id="pageTitle">Dashboard</h1></div>
                 <div class="topbar-right">
+                    <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle dark mode">&#9790;</button>
                     <div class="currency-selector">
                         <select id="currencySelect">
                             <option value="USD">$ USD</option>
@@ -214,6 +216,7 @@
                 <button class="menu-toggle" id="wellnessMenuToggle">&#9776;</button>
                 <div class="topbar-left"><h1 class="page-title" id="wPageTitle">Dashboard</h1></div>
                 <div class="topbar-right">
+                    <button class="dark-mode-toggle" id="darkModeToggleW" title="Toggle dark mode">&#9790;</button>
                     <div class="week-selector">
                         <button class="btn-arrow" id="wPrevWeek">&lsaquo;</button>
                         <span id="wCurrentWeek">This Week</span>
@@ -395,9 +398,34 @@
     <!-- Toast (shared) -->
     <div class="toast" id="toast"><span id="toastMessage"></span></div>
 
+    <!-- Onboarding Tour -->
+    <div class="tour-overlay" id="tourOverlay"></div>
+    <div class="tour-tooltip" id="tourTooltip" style="display:none;"></div>
+
+    <!-- Mobile Bottom Nav: Expense -->
+    <nav class="mobile-bottom-nav" id="mobileNavExpense" style="display:none;">
+        <div class="mobile-bottom-nav-items">
+            <button class="mobile-nav-btn active" data-view="dashboard"><span class="mnav-icon">&#128202;</span><span class="mnav-label">Home</span></button>
+            <button class="mobile-nav-btn" data-view="add"><span class="mnav-icon">&#10133;</span><span class="mnav-label">Add</span></button>
+            <button class="mobile-nav-btn" data-view="history"><span class="mnav-icon">&#128203;</span><span class="mnav-label">History</span></button>
+            <button class="mobile-nav-btn" data-view="budget"><span class="mnav-icon">&#127919;</span><span class="mnav-label">Budget</span></button>
+        </div>
+    </nav>
+
+    <!-- Mobile Bottom Nav: Wellness -->
+    <nav class="mobile-bottom-nav mobile-nav-wellness" id="mobileNavWellness" style="display:none;">
+        <div class="mobile-bottom-nav-items">
+            <button class="mobile-nav-btn active" data-wview="w-dashboard"><span class="mnav-icon">&#128202;</span><span class="mnav-label">Home</span></button>
+            <button class="mobile-nav-btn" data-wview="w-log"><span class="mnav-icon">&#127939;</span><span class="mnav-label">Log</span></button>
+            <button class="mobile-nav-btn" data-wview="w-weight"><span class="mnav-icon">&#9878;&#65039;</span><span class="mnav-label">Weight</span></button>
+            <button class="mobile-nav-btn" data-wview="w-plan"><span class="mnav-icon">&#128197;</span><span class="mnav-label">Plan</span></button>
+            <button class="mobile-nav-btn" data-wview="w-profile"><span class="mnav-icon">&#128100;</span><span class="mnav-label">Profile</span></button>
+        </div>
+    </nav>
+
     <!-- Footer with Version Control -->
     <footer class="app-footer">
-        <p>LifeFlow v1.0.0 | Last Updated: March 23, 2026 | <span id="buildInfo">Ready</span></p>
+        <p>LifeFlow v1.2.0 | Last Updated: March 23, 2026 | <span id="buildInfo">Ready</span></p>
     </footer>
 
     <script src="app.js"></script>

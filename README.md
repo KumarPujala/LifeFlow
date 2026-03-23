@@ -7,16 +7,21 @@ LifeFlow is a browser-based personal tracker that combines two tools in one inte
 - Expense tracking for monthly spending, category budgets, and export
 - Wellness tracking for workouts, weight logs, goals, and weekly planning
 
-Current release: **v1.1.0**
+Current release: **v1.2.0**
 
-## What's In v1.1.0
+## What's In v1.2.0
 
-Version `v1.1.0` is focused on static hosting and sharing.
+Version `v1.2.0` focuses on UI/UX polish and enhanced user experience.
 
-- Launch-ready HTML, CSS, and JavaScript app
-- Local browser storage for saved data
-- Version footer displayed in the UI
-- Ready for deployment to static hosting platforms
+- Dark mode toggle with persisted preference
+- First-time onboarding tour for each tracker mode
+- Mobile bottom navigation bar on small screens
+- Smooth animated view transitions
+- Enhanced empty states with SVG illustrations and CTAs
+- Skeleton loading shimmer when switching views
+- Trend indicators comparing spending/activity vs. previous period
+- Chart.js integration for dashboard charts
+- Bug fix: budget categories show all defaults even with no expenses
 
 ## Project Files
 

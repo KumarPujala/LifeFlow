@@ -1,6 +1,6 @@
 # LifeFlow — Improvement Roadmap
 
-> Current Version: **v1.0.0** | Last Updated: March 23, 2026
+> Current Version: **v1.2.0** | Last Updated: March 23, 2026
 
 ---
 
@@ -33,13 +33,13 @@
 
 ## v1.2.0 — UI/UX Polish
 
-- [ ] **Dark Mode Toggle** — Sun/moon icon in topbar; persisted preference in localStorage
-- [ ] **Onboarding Tour** — First-time tooltip walkthrough (3-4 steps) for each tracker mode
-- [ ] **Mobile Bottom Navigation** — Fixed bottom tab bar replacing sidebar hamburger on screens < 768px
-- [ ] **Animated View Transitions** — Smooth slide/fade when switching between views
-- [ ] **Better Empty States** — SVG illustrations + call-to-action buttons instead of plain text
-- [ ] **Skeleton Loading** — Brief placeholder shimmer when switching views or loading charts
-- [ ] **Trend Indicators on Cards** — Up/down arrows on dashboard cards comparing vs. last month/week
+- [x] **Dark Mode Toggle** — Sun/moon icon in topbar; persisted preference in localStorage
+- [x] **Onboarding Tour** — First-time tooltip walkthrough (3-4 steps) for each tracker mode
+- [x] **Mobile Bottom Navigation** — Fixed bottom tab bar replacing sidebar hamburger on screens < 768px
+- [x] **Animated View Transitions** — Smooth slide/fade when switching between views
+- [x] **Better Empty States** — SVG illustrations + call-to-action buttons instead of plain text
+- [x] **Skeleton Loading** — Brief placeholder shimmer when switching views or loading charts
+- [x] **Trend Indicators on Cards** — Up/down arrows on dashboard cards comparing vs. last month/week
 
 ---
 

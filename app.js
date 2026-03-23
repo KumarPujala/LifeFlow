@@ -14,6 +14,8 @@ const state = {
   currentMonth: new Date(),
   currentWeek: new Date(),
   currency: 'USD',
+  theme: 'light',
+  toursCompleted: {},
   expenses: [],
   budgets: {},
   activities: [],
@@ -28,6 +30,7 @@ const currencySymbols = { USD: '$', GBP: '£', INR: '₹', EUR: '€', JPY: '¥'
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
   loadFromLocalStorage();
+  applyTheme();
   setupEventListeners();
   setDefaultDates();
   updateCurrencyDisplay();
@@ -43,6 +46,8 @@ function loadFromLocalStorage() {
     state.weightEntries = data.weightEntries || [];
     state.userProfile = data.userProfile || {};
     state.currency = data.currency || 'USD';
+    state.theme = data.theme || 'light';
+    state.toursCompleted = data.toursCompleted || {};
     document.getElementById('currencySelect').value = state.currency;
   }
 }
@@ -55,6 +60,8 @@ function saveToLocalStorage() {
     weightEntries: state.weightEntries,
     userProfile: state.userProfile,
     currency: state.currency,
+    theme: state.theme,
+    toursCompleted: state.toursCompleted,
   };
   localStorage.setItem('lifeflowData', JSON.stringify(data));
 }
@@ -149,6 +156,26 @@ function setupEventListeners() {
   // Menu Toggles (Mobile)
   document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
   document.getElementById('wellnessMenuToggle').addEventListener('click', toggleSidebar);
+
+  // Dark Mode Toggles
+  document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+  document.getElementById('darkModeToggleW').addEventListener('click', toggleDarkMode);
+
+  // Mobile Bottom Nav: Expense
+  document.querySelectorAll('#mobileNavExpense .mobile-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchExpenseView(btn.dataset.view);
+      updateMobileNav('expense');
+    });
+  });
+
+  // Mobile Bottom Nav: Wellness
+  document.querySelectorAll('#mobileNavWellness .mobile-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchWellnessView(btn.dataset.wview);
+      updateMobileNav('wellness');
+    });
+  });
 }
 
 // ==================== MODE MANAGEMENT ====================
@@ -157,15 +184,27 @@ function enterMode(mode) {
   document.getElementById('modeSelector').style.display = 'none';
   if (mode === 'expense') {
     document.getElementById('expenseApp').style.display = 'flex';
+    showMobileNav('expense');
     switchExpenseView('dashboard');
     populateCategoryFilter();
     populateQuickAdd();
-    updateExpenseDashboard();
+    showSkeleton('expense');
+    setTimeout(() => {
+      restoreCards('expense');
+      updateExpenseDashboard();
+      if (!state.toursCompleted.expense) startTour('expense');
+    }, 400);
   } else if (mode === 'wellness') {
     document.getElementById('wellnessApp').style.display = 'flex';
+    showMobileNav('wellness');
     switchWellnessView('w-dashboard');
     checkWellnessProfile();
-    updateWellnessDashboard();
+    showSkeleton('wellness');
+    setTimeout(() => {
+      restoreCards('wellness');
+      updateWellnessDashboard();
+      if (!state.toursCompleted.wellness) startTour('wellness');
+    }, 400);
   }
 }
 
@@ -174,6 +213,7 @@ function exitMode() {
   document.getElementById('expenseApp').style.display = 'none';
   document.getElementById('wellnessApp').style.display = 'none';
   document.getElementById('modeSelector').style.display = 'block';
+  hideMobileNav();
 }
 
 // ==================== EXPENSE TRACKER ====================
@@ -185,6 +225,7 @@ function switchExpenseView(view) {
   document.getElementById(`view-${view}`).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
   document.querySelector(`[data-view="${view}"]`).classList.add('active');
+  updateMobileNav('expense');
   
   const titles = {
     dashboard: 'Dashboard',
@@ -251,10 +292,10 @@ function updateExpenseDashboard() {
   const daily = count > 0 ? total / days : 0;
 
   const symbol = currencySymbols[state.currency];
-  document.getElementById('totalSpent').textContent = `${symbol}${total.toFixed(2)}`;
+  document.getElementById('totalSpent').innerHTML = `${symbol}${total.toFixed(2)}${getExpenseTrend('total')}`;
   document.getElementById('budgetLeft').textContent = `${symbol}${remaining.toFixed(2)}`;
-  document.getElementById('transactionCount').textContent = count;
-  document.getElementById('dailyAvg').textContent = `${symbol}${daily.toFixed(2)}`;
+  document.getElementById('transactionCount').innerHTML = `${count}${getExpenseTrend('count')}`;
+  document.getElementById('dailyAvg').innerHTML = `${symbol}${daily.toFixed(2)}${getExpenseTrend('daily')}`;
 
   renderRecentTransactions();
   renderCategoryChart();
@@ -284,7 +325,7 @@ function renderRecentTransactions() {
   const container = document.getElementById('recentTransactions');
   
   if (expenses.length === 0) {
-    container.innerHTML = '<div class="empty-state">No expenses yet. Start by adding one!</div>';
+    container.innerHTML = getEmptyState('expense', 'No expenses yet', 'Start tracking your spending by adding your first expense.', 'add');
     return;
   }
 
@@ -373,7 +414,7 @@ function renderAllExpenses() {
   const container = document.getElementById('allTransactions');
   
   if (expenses.length === 0) {
-    container.innerHTML = '<div class="empty-state">No expenses found for this month.</div>';
+    container.innerHTML = getEmptyState('expense', 'No expenses this month', 'Add your first expense to start tracking.', 'add');
     return;
   }
 
@@ -419,7 +460,7 @@ function renderFilteredExpenses(expenses) {
   const symbol = currencySymbols[state.currency];
 
   if (expenses.length === 0) {
-    container.innerHTML = '<div class="empty-state">No expenses match your filters.</div>';
+    container.innerHTML = getEmptyState('expense', 'No matches', 'Try adjusting your search or filters.', null);
     return;
   }
 
@@ -625,6 +666,7 @@ function switchWellnessView(view) {
   document.getElementById(`wview-${view}`).classList.add('active');
   document.querySelectorAll('.wnav-item').forEach(item => item.classList.remove('active'));
   document.querySelector(`[data-wview="${view}"]`).classList.add('active');
+  updateMobileNav('wellness');
 
   const titles = {
     'w-dashboard': 'Dashboard',
@@ -680,9 +722,9 @@ function updateWellnessDashboard() {
   const workoutCount = weekActivities.length;
   const totalMinutes = weekActivities.reduce((sum, a) => sum + a.duration, 0);
 
-  document.getElementById('wCalories').textContent = totalCalories;
-  document.getElementById('wWorkouts').textContent = workoutCount;
-  document.getElementById('wMinutes').textContent = totalMinutes;
+  document.getElementById('wCalories').innerHTML = `${totalCalories}${getWellnessTrend('calories')}`;
+  document.getElementById('wWorkouts').innerHTML = `${workoutCount}${getWellnessTrend('workouts')}`;
+  document.getElementById('wMinutes').innerHTML = `${totalMinutes}${getWellnessTrend('minutes')}`;
 
   const currentWeight = getCurrentWeight();
   document.getElementById('wCurrentWeight').textContent = currentWeight ? `${currentWeight} kg` : '—';
@@ -737,7 +779,7 @@ function renderActivityHistory() {
   const container = document.getElementById('wAllActivities');
 
   if (activities.length === 0) {
-    container.innerHTML = '<div class="empty-state">No activities logged yet.</div>';
+    container.innerHTML = getEmptyState('wellness', 'No activities yet', 'Log your first workout to start your fitness journey!', 'w-log');
     return;
   }
 
@@ -762,7 +804,7 @@ function renderRecentActivities() {
   const container = document.getElementById('wRecentActivities');
 
   if (activities.length === 0) {
-    container.innerHTML = '<div class="empty-state">No activities logged yet. Start moving!</div>';
+    container.innerHTML = getEmptyState('wellness', 'No activities this week', 'Start moving! Log your first activity.', 'w-log');
     return;
   }
 
@@ -821,7 +863,7 @@ function renderWeightHistory() {
   const container = document.getElementById('wWeightHistory');
 
   if (state.weightEntries.length === 0) {
-    container.innerHTML = '<div class="empty-state">No weight entries yet.</div>';
+    container.innerHTML = getEmptyState('wellness', 'No weight entries', 'Start logging your weight to track progress.', 'w-weight');
     return;
   }
 
@@ -1006,6 +1048,286 @@ function showToast(message) {
 }
 
 function toggleSidebar() {
-  const sidebar = document.querySelector('.sidebar');
-  sidebar.style.display = sidebar.style.display === 'none' ? 'block' : 'none';
+  const sidebar = state.currentMode === 'wellness'
+    ? document.getElementById('wellnessSidebar')
+    : document.getElementById('sidebar');
+  sidebar.classList.toggle('open');
+}
+
+// ==================== DARK MODE ====================
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme);
+  const icon = state.theme === 'dark' ? '\u2600\ufe0f' : '\u263e';
+  document.getElementById('darkModeToggle').textContent = icon;
+  document.getElementById('darkModeToggleW').textContent = icon;
+}
+
+function toggleDarkMode() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  saveToLocalStorage();
+}
+
+// ==================== ONBOARDING TOUR ====================
+
+const tourSteps = {
+  expense: [
+    { target: '#view-dashboard .summary-cards', title: 'Your Dashboard', text: 'See your spending at a glance — total spent, budget remaining, transactions, and daily average.' },
+    { target: '[data-view="add"]', title: 'Add Expenses', text: 'Tap here to log a new expense with category, amount, and notes.' },
+    { target: '[data-view="budget"]', title: 'Set Budgets', text: 'Set monthly spending limits for each category and track your progress.' },
+    { target: '#exportBtn', title: 'Export Data', text: 'Download your monthly expenses as an Excel spreadsheet anytime.' },
+  ],
+  wellness: [
+    { target: '#wview-w-dashboard .summary-cards', title: 'Wellness Overview', text: 'Track calories burned, workouts, total minutes, and your current weight.' },
+    { target: '[data-wview="w-log"]', title: 'Log Activities', text: 'Record your workouts with duration, intensity, and how you felt.' },
+    { target: '[data-wview="w-weight"]', title: 'Weight Tracking', text: 'Log your weight regularly to visualize your progress over time.' },
+    { target: '[data-wview="w-plan"]', title: 'Weekly Plan', text: 'Get a personalized weekly exercise plan based on your fitness goals.' },
+  ],
+};
+
+let currentTourMode = null;
+let currentTourStep = 0;
+
+function startTour(mode) {
+  currentTourMode = mode;
+  currentTourStep = 0;
+  showTourStep();
+}
+
+function showTourStep() {
+  const steps = tourSteps[currentTourMode];
+  if (currentTourStep >= steps.length) {
+    endTour();
+    return;
+  }
+
+  const step = steps[currentTourStep];
+  const overlay = document.getElementById('tourOverlay');
+  const tooltip = document.getElementById('tourTooltip');
+  overlay.classList.add('active');
+  tooltip.style.display = 'block';
+
+  const dots = steps.map((_, i) => `<span class="tour-dot ${i === currentTourStep ? 'active' : ''}"></span>`).join('');
+  const btnClass = currentTourMode === 'wellness' ? 'tour-btn tour-btn-wellness' : 'tour-btn';
+  const btnText = currentTourStep < steps.length - 1 ? 'Next' : 'Got it!';
+
+  tooltip.innerHTML = `
+    <h4>${step.title}</h4>
+    <p>${step.text}</p>
+    <div class="tour-tooltip-footer">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="tour-skip" onclick="endTour()">Skip</button>
+        <div class="tour-dots">${dots}</div>
+      </div>
+      <button class="${btnClass}" onclick="nextTourStep()">${btnText}</button>
+    </div>
+  `;
+
+  // Position tooltip near the target
+  const target = document.querySelector(step.target);
+  if (target) {
+    const rect = target.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    let top = rect.bottom + 12;
+    let left = rect.left + rect.width / 2 - 160;
+    if (top + tooltipRect.height > window.innerHeight) top = rect.top - tooltipRect.height - 12;
+    if (left < 12) left = 12;
+    if (left + 320 > window.innerWidth) left = window.innerWidth - 332;
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+  } else {
+    tooltip.style.top = '50%';
+    tooltip.style.left = '50%';
+    tooltip.style.transform = 'translate(-50%, -50%)';
+  }
+}
+
+function nextTourStep() {
+  currentTourStep++;
+  showTourStep();
+}
+
+function endTour() {
+  document.getElementById('tourOverlay').classList.remove('active');
+  document.getElementById('tourTooltip').style.display = 'none';
+  if (currentTourMode) {
+    state.toursCompleted[currentTourMode] = true;
+    saveToLocalStorage();
+  }
+  currentTourMode = null;
+  currentTourStep = 0;
+}
+
+// ==================== MOBILE BOTTOM NAVIGATION ====================
+
+function showMobileNav(mode) {
+  if (window.innerWidth > 768) return;
+  hideMobileNav();
+  if (mode === 'expense') {
+    document.getElementById('mobileNavExpense').style.display = 'block';
+  } else {
+    document.getElementById('mobileNavWellness').style.display = 'block';
+  }
+}
+
+function hideMobileNav() {
+  document.getElementById('mobileNavExpense').style.display = 'none';
+  document.getElementById('mobileNavWellness').style.display = 'none';
+}
+
+function updateMobileNav(mode) {
+  if (mode === 'expense') {
+    document.querySelectorAll('#mobileNavExpense .mobile-nav-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.view === state.currentExpenseView);
+    });
+  } else {
+    document.querySelectorAll('#mobileNavWellness .mobile-nav-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.wview === state.currentWellnessView);
+    });
+  }
+}
+
+// ==================== SKELETON LOADING ====================
+
+function showSkeleton(mode) {
+  if (mode === 'expense') {
+    const cardsContainer = document.querySelector('#view-dashboard .summary-cards');
+    cardsContainer.innerHTML = Array(4).fill('<div class="skeleton skeleton-card"></div>').join('');
+    const chartsRow = document.querySelector('#view-dashboard .charts-row');
+    chartsRow.innerHTML = '<div class="skeleton skeleton-chart"></div><div class="skeleton skeleton-chart"></div>';
+    const recent = document.getElementById('recentTransactions');
+    recent.innerHTML = Array(3).fill('<div class="skeleton skeleton-row"></div>').join('');
+  } else {
+    const cardsContainer = document.getElementById('wDashCards');
+    if (cardsContainer.style.display !== 'none') {
+      cardsContainer.innerHTML = Array(4).fill('<div class="skeleton skeleton-card"></div>').join('');
+    }
+  }
+}
+
+function restoreCards(mode) {
+  if (mode === 'expense') {
+    const cardsContainer = document.querySelector('#view-dashboard .summary-cards');
+    cardsContainer.innerHTML = `
+      <div class="card card-total"><div class="card-icon">&#128184;</div><div class="card-info"><span class="card-label">Total Spent</span><span class="card-value" id="totalSpent">$0.00</span></div></div>
+      <div class="card card-budget"><div class="card-icon">&#127919;</div><div class="card-info"><span class="card-label">Budget Left</span><span class="card-value" id="budgetLeft">$0.00</span></div></div>
+      <div class="card card-count"><div class="card-icon">&#129534;</div><div class="card-info"><span class="card-label">Transactions</span><span class="card-value" id="transactionCount">0</span></div></div>
+      <div class="card card-avg"><div class="card-icon">&#128200;</div><div class="card-info"><span class="card-label">Daily Average</span><span class="card-value" id="dailyAvg">$0.00</span></div></div>
+    `;
+    const chartsRow = document.querySelector('#view-dashboard .charts-row');
+    chartsRow.innerHTML = `
+      <div class="chart-container"><h3>Spending by Category</h3><canvas id="categoryChart" width="400" height="400"></canvas><div class="chart-legend" id="categoryLegend"></div></div>
+      <div class="chart-container"><h3>Daily Spending</h3><canvas id="dailyChart" width="600" height="400"></canvas></div>
+    `;
+  } else {
+    const cardsContainer = document.getElementById('wDashCards');
+    cardsContainer.innerHTML = `
+      <div class="card card-wellness-1"><div class="card-icon">&#128293;</div><div class="card-info"><span class="card-label">Calories Burned</span><span class="card-value" id="wCalories">0</span></div></div>
+      <div class="card card-wellness-2"><div class="card-icon">&#127939;</div><div class="card-info"><span class="card-label">Workouts This Week</span><span class="card-value" id="wWorkouts">0</span></div></div>
+      <div class="card card-wellness-3"><div class="card-icon">&#9201;&#65039;</div><div class="card-info"><span class="card-label">Total Minutes</span><span class="card-value" id="wMinutes">0</span></div></div>
+      <div class="card card-wellness-4"><div class="card-icon">&#9878;&#65039;</div><div class="card-info"><span class="card-label">Current Weight</span><span class="card-value" id="wCurrentWeight">&mdash;</span></div></div>
+    `;
+  }
+}
+
+// ==================== BETTER EMPTY STATES ====================
+
+function getEmptyState(mode, title, description, navTarget) {
+  const svg = mode === 'expense'
+    ? '<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="80" fill="#f0ecfe"/><rect x="60" y="70" width="80" height="60" rx="8" fill="#6C5CE7" opacity="0.2"/><rect x="70" y="85" width="60" height="4" rx="2" fill="#6C5CE7" opacity="0.4"/><rect x="70" y="95" width="40" height="4" rx="2" fill="#6C5CE7" opacity="0.3"/><rect x="70" y="105" width="50" height="4" rx="2" fill="#6C5CE7" opacity="0.3"/><circle cx="100" cy="60" r="15" fill="#6C5CE7" opacity="0.3"/><line x1="100" y1="50" x2="100" y2="70" stroke="#6C5CE7" stroke-width="2" opacity="0.4"/><line x1="90" y1="60" x2="110" y2="60" stroke="#6C5CE7" stroke-width="2" opacity="0.4"/></svg>'
+    : '<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="80" fill="#e0f7f6"/><path d="M80 130 L100 80 L120 130" stroke="#00b894" stroke-width="4" fill="none" opacity="0.4"/><circle cx="100" cy="70" r="15" fill="#00b894" opacity="0.3"/><rect x="85" y="120" width="30" height="4" rx="2" fill="#00b894" opacity="0.3"/><rect x="75" y="130" width="50" height="4" rx="2" fill="#00b894" opacity="0.2"/></svg>';
+
+  const btnClass = mode === 'wellness' ? 'btn-empty btn-empty-wellness' : 'btn-empty';
+  const btnHTML = navTarget
+    ? `<button class="${btnClass}" onclick="${mode === 'expense' ? `switchExpenseView('${navTarget}')` : `switchWellnessView('${navTarget}')`}">&#10133; Get Started</button>`
+    : '';
+
+  return `
+    <div class="empty-state-enhanced">
+      ${svg}
+      <h4>${title}</h4>
+      <p>${description}</p>
+      ${btnHTML}
+    </div>
+  `;
+}
+
+// ==================== TREND INDICATORS ====================
+
+function getPrevMonthExpenses() {
+  const prev = new Date(state.currentMonth);
+  prev.setMonth(prev.getMonth() - 1);
+  const year = prev.getFullYear();
+  const month = prev.getMonth();
+  return state.expenses.filter(e => {
+    const d = new Date(e.date);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+}
+
+function getExpenseTrend(type) {
+  const current = getExpensesForMonth();
+  const prev = getPrevMonthExpenses();
+  let cur = 0, prv = 0;
+
+  if (type === 'total') {
+    cur = current.reduce((s, e) => s + e.amount, 0);
+    prv = prev.reduce((s, e) => s + e.amount, 0);
+  } else if (type === 'count') {
+    cur = current.length;
+    prv = prev.length;
+  } else if (type === 'daily') {
+    const days = getDaysInMonth();
+    cur = current.length > 0 ? current.reduce((s, e) => s + e.amount, 0) / days : 0;
+    const prevDate = new Date(state.currentMonth);
+    prevDate.setMonth(prevDate.getMonth() - 1);
+    const prevDays = new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 0).getDate();
+    prv = prev.length > 0 ? prev.reduce((s, e) => s + e.amount, 0) / prevDays : 0;
+  }
+
+  if (prv === 0 && cur === 0) return '';
+  if (prv === 0) return '<span class="trend-indicator trend-up">\u2191 New</span>';
+
+  const pct = ((cur - prv) / prv * 100).toFixed(0);
+  if (cur > prv) return `<span class="trend-indicator trend-up">\u2191 ${pct}%</span>`;
+  if (cur < prv) return `<span class="trend-indicator trend-down">\u2193 ${Math.abs(pct)}%</span>`;
+  return '<span class="trend-indicator trend-neutral">\u2194 0%</span>';
+}
+
+function getPrevWeekActivities() {
+  const start = new Date(state.currentWeek);
+  start.setDate(start.getDate() - start.getDay() - 7);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  return state.activities.filter(a => {
+    const d = new Date(a.date);
+    return d >= start && d <= end;
+  });
+}
+
+function getWellnessTrend(type) {
+  const current = getActivitiesForWeek();
+  const prev = getPrevWeekActivities();
+  let cur = 0, prv = 0;
+
+  if (type === 'calories') {
+    cur = current.reduce((s, a) => s + (a.caloriesBurned || 0), 0);
+    prv = prev.reduce((s, a) => s + (a.caloriesBurned || 0), 0);
+  } else if (type === 'workouts') {
+    cur = current.length;
+    prv = prev.length;
+  } else if (type === 'minutes') {
+    cur = current.reduce((s, a) => s + a.duration, 0);
+    prv = prev.reduce((s, a) => s + a.duration, 0);
+  }
+
+  if (prv === 0 && cur === 0) return '';
+  if (prv === 0) return '<span class="trend-indicator trend-down">\u2191 New</span>';
+
+  const pct = ((cur - prv) / prv * 100).toFixed(0);
+  // For wellness, up is good (green), down is bad (red)
+  if (cur > prv) return `<span class="trend-indicator trend-down">\u2191 ${pct}%</span>`;
+  if (cur < prv) return `<span class="trend-indicator trend-up">\u2193 ${Math.abs(pct)}%</span>`;
+  return '<span class="trend-indicator trend-neutral">\u2194 0%</span>';
 }
