@@ -1,5 +1,7 @@
 # LifeFlow
 
+**Live App:** [https://kumarpujala.github.io/LifeFlow/](https://kumarpujala.github.io/LifeFlow/)
+
 LifeFlow is a browser-based personal tracker that combines two tools in one interface:
 
 - Expense tracking for monthly spending, category budgets, and export
