@@ -113,6 +113,7 @@ function setupEventListeners() {
     state.currency = e.target.value;
     saveToLocalStorage();
     updateCurrencyDisplay();
+    populateQuickAdd();
     updateExpenseDashboard();
   });
 
@@ -555,21 +556,32 @@ function populateCategoryFilter() {
   select.innerHTML = '<option value="">All Categories</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
-function populateQuickAdd() {
-  const templates = [
-    { title: 'Lunch', category: '🍕 Food & Dining', amount: 12 },
-    { title: 'Gas', category: '🚗 Transportation', amount: 50 },
-    { title: 'Movie', category: '🎬 Entertainment', amount: 15 },
-    { title: 'Groceries', category: '🍕 Food & Dining', amount: 80 },
-  ];
+const quickAddTemplates = [
+  { title: 'Lunch', category: '🍕 Food & Dining', amounts: { USD: 15, GBP: 12, INR: 250, EUR: 14, JPY: 1500, AUD: 20, CAD: 18 } },
+  { title: 'Coffee', category: '🍔 Food & Dining', amounts: { USD: 5, GBP: 4, INR: 80, EUR: 4.5, JPY: 500, AUD: 6, CAD: 6 } },
+  { title: 'Gas', category: '🚗 Transportation', amounts: { USD: 50, GBP: 40, INR: 800, EUR: 45, JPY: 5000, AUD: 65, CAD: 60 } },
+  { title: 'Movie', category: '🎬 Entertainment', amounts: { USD: 15, GBP: 12, INR: 300, EUR: 13, JPY: 1800, AUD: 22, CAD: 16 } },
+  { title: 'Groceries', category: '🍔 Food & Dining', amounts: { USD: 80, GBP: 60, INR: 1500, EUR: 70, JPY: 8000, AUD: 100, CAD: 90 } },
+  { title: 'Uber', category: '🚗 Transportation', amounts: { USD: 12, GBP: 10, INR: 200, EUR: 11, JPY: 1200, AUD: 16, CAD: 14 } },
+  { title: 'Gym', category: '💪 Gym & Fitness', amounts: { USD: 40, GBP: 30, INR: 600, EUR: 35, JPY: 4000, AUD: 50, CAD: 45 } },
+  { title: 'Netflix', category: '📱 Subscriptions', amounts: { USD: 15, GBP: 11, INR: 200, EUR: 13, JPY: 1500, AUD: 17, CAD: 17 } },
+];
 
+function populateQuickAdd() {
+  const symbol = currencySymbols[state.currency];
   const grid = document.getElementById('quickAddGrid');
-  grid.innerHTML = templates.map(t => `
-    <button class="quick-add-item" onclick="quickAddTemplate('${t.title}', '${t.category}', ${t.amount})">
-      <div>${t.category}</div>
-      <div class="quick-add-title">${t.title}</div>
-    </button>
-  `).join('');
+  grid.innerHTML = quickAddTemplates.map(t => {
+    const amount = t.amounts[state.currency] || t.amounts.USD;
+    return `
+      <button class="quick-add-btn" onclick="quickAddTemplate('${t.title}', '${t.category}', ${amount})">
+        <div class="quick-add-info">
+          <span class="quick-add-emoji">${t.category.split(' ')[0]}</span>
+          <span class="quick-add-title">${t.title}</span>
+        </div>
+        <span class="quick-add-amount">${symbol}${amount}</span>
+      </button>
+    `;
+  }).join('');
 }
 
 function quickAddTemplate(title, category, amount) {

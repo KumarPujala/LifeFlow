@@ -429,16 +429,22 @@ body {
 .quick-add-section h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
 .subtitle { color: var(--text-light); font-size: 14px; margin-bottom: 16px; }
 
-.quick-add-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.quick-add-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 
 .quick-add-btn {
     display: flex; align-items: center; justify-content: space-between;
     padding: 14px 16px; background: var(--card-bg); border: 2px solid var(--border);
     border-radius: var(--radius-sm); cursor: pointer; font-family: inherit;
     font-size: 14px; font-weight: 500; transition: var(--transition); color: var(--text);
+    gap: 10px;
 }
-.quick-add-btn span { color: var(--text-light); font-size: 13px; }
-.quick-add-btn:hover { border-color: var(--primary); background: #f8f7ff; transform: translateY(-1px); }
+.quick-add-btn:hover { border-color: var(--primary); background: rgba(108,92,231,0.04); transform: translateY(-2px); box-shadow: var(--shadow); }
+[data-theme="dark"] .quick-add-btn:hover { background: rgba(108,92,231,0.1); }
+
+.quick-add-info { display: flex; align-items: center; gap: 8px; }
+.quick-add-emoji { font-size: 20px; }
+.quick-add-title { font-weight: 600; font-size: 14px; color: var(--text); }
+.quick-add-amount { font-size: 13px; font-weight: 600; color: var(--primary); white-space: nowrap; }
 
 /* ===== History ===== */
 .history-controls { margin-bottom: 20px; }
