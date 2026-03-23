@@ -218,7 +218,7 @@ function exitMode() {
   state.currentMode = null;
   document.getElementById('expenseApp').style.display = 'none';
   document.getElementById('wellnessApp').style.display = 'none';
-  document.getElementById('modeSelector').style.display = 'block';
+  document.getElementById('modeSelector').style.display = 'flex';
   hideMobileNav();
 }
 
