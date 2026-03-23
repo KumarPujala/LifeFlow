@@ -121,7 +121,6 @@ function setupEventListeners() {
 
   // Expense Form
   document.getElementById('expenseForm').addEventListener('submit', addExpense);
-  document.getElementById('submitExpense').addEventListener('click', (e) => e.preventDefault());
 
   // Export Button
   document.getElementById('exportBtn').addEventListener('click', exportToExcel);
